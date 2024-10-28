@@ -4,25 +4,18 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <net/if.h>
+#include "pretty.h"
+#include "netstuff.h"
 
-// Function for colored print
-void print_colored(const char *message, const char *color) {
-    printf("%s%s\033[0m\n", color, message);
-} 
+void display_help() {
+    printf("How to use me:\n");
+    printf("  wiwa <COMMAND>\n\n");
 
-void show_local_ip() {
-    struct ifaddrs *addrs, *tmp;
-    getifaddrs(&addrs);
-
-    printf("Your local IP address:\n");
-    for(tmp=addrs; tmp != NULL;tmp = tmp->ifa_next) {
-        if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET) {
-            char ip[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &((struct sockaddr_in *)tmp->ifa_addr)->sin_addr, ip, sizeof(ip));
-            print_colored(ip, "\033[32m");
-        }
-    }
-    freeifaddrs(addrs);
+    printf("Available Commands:\n");
+    printf("  hello      - Displays a welcome message and help information.\n");
+    printf("  ip         - Displays local IP adresses on the machine.\n");
+    printf("  help       - Displays this help message.\n");
 }
 
 int main (int argc, char *argv[]) {
@@ -31,11 +24,18 @@ int main (int argc, char *argv[]) {
         return 1;
     } 
 
-    if (strcmp(argv[1], "hello") ==0 ) {
-        printf("Hello and welcome to this little WireWatch network scanner my friend!\n");
-        show_local_ip();
+    if (strcmp(argv[1], "hello") == 0 ) {
+        printf("Hello and welcome to this little WireWatch network scanner my friend!\n\n");
+        display_help();
+    } else if (strcmp(argv[1], "help") == 0) {
+        display_help();
+    } else if (strcmp(argv[1], "ip") == 0) {
+        show_local_ip(0);
+        if (argc > 2 && (strcmp(argv[2], "--details") == 0 || strcmp(argv[2], "-d") == 0)) {
+        show_local_ip(1);
+}
     } else {
-        print_colored("NOPE. That command is not correct my friend. Try 'wiwa hello' for some help!", "\033[31m");
+        print_colored("NOPE. That command is not correct my friend. Try 'wiwa help' for some help!", "\033[31m");
     } 
     
 }

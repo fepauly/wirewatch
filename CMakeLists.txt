@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.23)
 
 project(WireWatch C)
 
-set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+include_directories(include)
 
-file(GLOB SOURCES "${SRC_DIR}/*.c")
+add_library(pretty_lib STATIC src/pretty.c)
+add_library(netstuff_lib STATIC src/netstuff.c)
 
-add_executable(wiwa ${SOURCES})
+add_executable(wiwa src/wirewatch.c)
+target_link_libraries(wiwa pretty_lib netstuff_lib)
 
 set_target_properties(wiwa PROPERTIES
     C_STANDARD 11
