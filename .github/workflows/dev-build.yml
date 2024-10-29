@@ -21,6 +21,9 @@ jobs:
       - name: Get GCC Version
         run: gcc --version
 
+      - name: Install cppcheck
+        run: sudo apt-get install cppcheck
+
       - name: Run CPPCheck
         run: cppcheck --enable=all --suppress=missingIncludeSystem --inline-suppr --error-exitcode=1 --output-file=cppcheck_report.txt -I ../include src
 
