@@ -4,11 +4,11 @@ project(WireWatch C)
 
 include_directories(include)
 
-add_library(pretty_lib STATIC src/pretty.c)
-add_library(netstuff_lib STATIC src/netstuff.c)
+add_library(pretty STATIC src/pretty.c)
+add_library(commands STATIC src/commands.c)
 
 add_executable(wiwa src/wirewatch.c)
-target_link_libraries(wiwa pretty_lib netstuff_lib)
+target_link_libraries(wiwa pretty commands)
 
 set_target_properties(wiwa PROPERTIES
     C_STANDARD 11
