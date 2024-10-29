@@ -6,6 +6,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <linux/if_ether.h> 
+#include <netpacket/packet.h>
 
 typedef struct {
     const char *name;
