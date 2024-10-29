@@ -1,0 +1,31 @@
+name: Linux Dev Build
+
+on:
+  push:
+    branches:
+      - feature/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.30.x'
+      
+      - name: Get GCC Version
+        run: gcc --version
+      
+      - name: Create buil dir
+        run: mkdir build
+      
+      - name: Build
+        run: |
+          cd build
+          cmake ..
+          cmake --build .

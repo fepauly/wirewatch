@@ -73,7 +73,7 @@ void cmd_hello(int argc, char *argv[]) {
 Command commands[] = {
     {"ip", cmd_ip, "Show local IP adresses and subnet masks."},
     {"hello", cmd_hello, "Prints a little welcome message."},
-    {"mac", cmd_mac, "Displays MAC adresses for each interace."},
+    {"mac", cmd_mac, "Displays MAC adresses for each interface."},
     {NULL, NULL, NULL}
 };
 
