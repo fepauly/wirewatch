@@ -20,7 +20,10 @@ jobs:
       
       - name: Get GCC Version
         run: gcc --version
-      
+
+      - name: Get cppcheck version
+        run: cppcheck --version
+        
       - name: Create buil dir
         run: mkdir build
       
