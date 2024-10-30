@@ -25,7 +25,7 @@ jobs:
         run: sudo apt-get install cppcheck
 
       - name: Run CPPCheck
-        run: cppcheck --enable=all --suppress=missingIncludeSystem --inline-suppr --error-exitcode=1 --output-file=cppcheck_report.txt -I ../include src
+        run: cppcheck --enable=all --suppress=missingIncludeSystem --inline-suppr --error-exitcode=1 --output-file=cppcheck_report.txt -I include src
 
       - name: Create buil dir
         run: mkdir build
