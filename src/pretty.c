@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "pretty.h"
 
 // Function for colored print
