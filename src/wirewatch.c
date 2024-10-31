@@ -19,7 +19,7 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    print_colored("NOPE. I don't know that command my friend", "\033[31m");
+    print_colored("NOPE. I don't know that command my friend.\n", "\033[31m");
     print_help();
     return 1;
     

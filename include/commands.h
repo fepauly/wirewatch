@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <time.h>
+#include <sys/time.h>
 
 typedef struct {
     const char *name;
@@ -22,9 +23,16 @@ typedef struct {
     const char *help;
 } Command;
 
+typedef struct {
+    const int port;
+    const char* name;
+} Port;
+
 extern Command commands[];
+extern Port default_ports[];
 void print_help();
 int is_valid_ip(const char *ip);
 int checksum(void *b, int len);
+
 
 #endif // COMMANDS_H
