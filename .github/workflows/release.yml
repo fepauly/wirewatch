@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch: 
+
+permissions:
+  contents: write 
 
 jobs:
   build:
@@ -32,7 +36,7 @@ jobs:
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build .
-          
+
       - name: Check for built executable
         run: ls -l ./build/wiwa
 
