@@ -1,6 +1,7 @@
 #include "commands.h"
 #include "pretty.h"
 
+/* Default ports to scan */
 Port default_ports[] = {
     {20, "FTP (File Transfer Protocol) - Data Transfer"},
     {21, "FTP (File Transfer Protocol) - Control"},
@@ -23,7 +24,9 @@ Port default_ports[] = {
     {8443, "HTTPS Alternate - Alternative for HTTPS"}
 };
 
-void cmd_ip(int argc, char *argv[]) {
+/* Scan Subcommands */
+
+void scan_ip(int argc, char *argv[]) {
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
         printf("Usage: wiwa ip\nDisplays local IP addresses and subnet masks.\n");
         return;
@@ -45,15 +48,90 @@ void cmd_ip(int argc, char *argv[]) {
 
             // Print ip information
             printf("  Interface: ");
-            print_colored(tmp->ifa_name, "\033[34m");
+            print_colored(tmp->ifa_name, BLUE_COLOR);
             printf("    IPv4 Adress: ");
-            print_colored(ip, "\033[32m");
+            print_colored(ip, GREEN_COLOR);
             printf("    Subnet Mask: ");
-            print_colored(subnet, "\033[32m");
+            print_colored(subnet, GREEN_COLOR);
         }
     }
     freeifaddrs(addrs);
 }
+
+void scan_port(int argc, char *argv[]){
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        printf("Usage: wiwa scan port <destination address> [start_port] [end_port]\nScan a destination adress for open default ports, single port or port range.\n");
+        return;
+    }
+
+    if (argc < 2) {
+        print_colored("NOPE NOPE. Usage: wiwa scan port <destination address> [start_port] [end_port]", ERROR_COLOR);
+        return;
+    }
+
+    const char *destination = argv[1];
+    struct sockaddr_in addr = {0};
+    addr.sin_family = AF_INET;
+
+    // Resolve destination address
+    if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
+        struct hostent *host = gethostbyname(destination);
+        if (host == NULL) {
+            herror("gethostbyname");
+            return;
+        }
+        addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
+    }
+
+    // Determine port range
+    int start_port = 0, end_port = 0;
+    if (argc == 2) {  // Use default ports
+        printf("Scanning default ports for destination %s...\n", destination);
+    } else if (argc == 3) {  // Single port
+        start_port = end_port = atoi(argv[2]);
+        if (start_port <= 0) {
+            print_colored("Thats an invalid port my friend. Port must be positive.", ERROR_COLOR);
+            return;
+        }
+        printf("Scanning port %d for destination %s...\n", start_port, destination);
+    } else if (argc == 4) {  // Port range
+        start_port = atoi(argv[2]);
+        end_port = atoi(argv[3]);
+        if (start_port <= 0 || end_port <= 0 || start_port > end_port) {
+            print_colored("Thats an invalid port range my friend. Ports must be positive and start port must be less than or equal to end port.", ERROR_COLOR);
+            return;
+        }
+        printf("Scanning ports from %d to %d for destination %s...\n", start_port, end_port, destination);
+    }
+
+    size_t range_count = (argc == 2) ? sizeof(default_ports) / sizeof(default_ports[0]) : (size_t)(end_port - start_port + 1);
+    int sockfd;
+    for (size_t i = 0; i < range_count; i++) {
+        int port = (argc == 2) ? default_ports[i].port : start_port + (int)i;
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            perror("socket");
+            continue;
+        }
+
+        addr.sin_port = htons(port);
+        struct timeval timeout = {.tv_sec = 0, .tv_usec = 500000};
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+
+        if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+            printf("Port %d (%s) is open!\n", port, (argc == 2 ? default_ports[i].name : ""));
+        } else {
+            if (start_port == end_port) {
+            printf("Port %d is closed!\n", port);
+            }
+        }
+
+        close(sockfd);
+    }
+}
+
+/* Commands */
 
 void cmd_mac(int argc, char *argv[]) {
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -76,9 +154,9 @@ void cmd_mac(int argc, char *argv[]) {
             sprintf(mac_str, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
             printf("  Interface: ");
-            print_colored(tmp->ifa_name, "\033[34m");
+            print_colored(tmp->ifa_name, BLUE_COLOR);
             printf("    MAC Address: ");
-            print_colored(mac_str, "\033[32m");
+            print_colored(mac_str, GREEN_COLOR);
         }
     }
     freeifaddrs(addrs); 
@@ -116,14 +194,14 @@ void cmd_gateway(int argc, char *argv[]) {
             char gateway_str[INET_ADDRSTRLEN];
             sprintf(gateway_str, "%s", inet_ntoa(gw_addr));
             printf("Default Gateway (via %s): ", iface);
-            print_colored(gateway_str, "\033[32m");
+            print_colored(gateway_str, GREEN_COLOR);
             
             fclose(fp);
             return;
         }
     }
 
-    print_colored("No default gateway found.", "\033[31m");
+    print_colored("No default gateway found.", ERROR_COLOR);
     fclose(fp);
 }
 
@@ -133,7 +211,7 @@ void cmd_ping(int argc, char *argv[]) {
         return;
     }
     if (argc != 2) {
-        print_colored("NOPE. You need to add a destination adress my friend: wiwa ping <destination adress>!", "\033[31m");
+        print_colored("NOPE. You need to add a destination adress my friend: wiwa ping <destination adress>!", ERROR_COLOR);
         return;
     }
 
@@ -195,185 +273,48 @@ void cmd_ping(int argc, char *argv[]) {
 }
 
 void cmd_scan(int argc, char *argv[]) {
-    if (argc == 1) {
-        print_colored("NOPE. There are some arguments missing my friend: wiwa scan <subcommand>!", "\033[31m");
-        return;
-    }
-    if (argc > 1 && strcmp(argv[1], "help") == 0) {
-        printf("Usage: wiwa scan <subcommand>\nAvailable subcommands:\nport - Scan for open ports on an IPv4 adress.\n");
+    if (argc < 2) {
+        print_colored("NOPE. Usage: wiwa scan <subcommand>", ERROR_COLOR);
         return;
     }
 
-    if (argc == 2 && strcmp(argv[1], "port") == 0) {
-        print_colored("NOPE. There are some arguments missing my friend: wiwa scan port <destination adress> [options]!", "\033[31m");
+    if (strcmp(argv[1], "help") == 0) {
+        print_scan_help();
         return;
     }
 
-    if (argc == 3 && strcmp(argv[1], "port") == 0) {
-        const char *destination = argv[2];
-
-        int sockfd;
-        struct sockaddr_in addr;
-        socklen_t addr_len = sizeof(addr);
-
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-
-        if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
-            struct hostent *host = gethostbyname(destination);
-            if (host == NULL) {
-                herror("gethostbyname");
-                return;
-            }
-            addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
-        }
-
-        const int num_default_ports = sizeof(default_ports) / sizeof(default_ports[0]);
-        printf("Scanning default ports for destination %s..\n", destination);
-        for (int i = 0; i < num_default_ports; i++) {
-            sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            if (sockfd < 0 ) {
-                perror("socket");
-                continue;
-            }
-
-            int port = default_ports[i].port;
-            addr.sin_port = htons(port);
-
-            struct timeval timeout;
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 500000;
-            setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-            setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)); 
-
-            if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-                printf("Port %d (%s) is open!\n", port, default_ports[i].name);
-            } else {
-                continue;
-            }
-
-            close(sockfd);
+    for (int i = 0; scan_commands[i].name != NULL; i++) {
+        if (strcmp(argv[1], scan_commands[i].name) == 0) {
+            scan_commands[i].function(argc - 1, argv + 1);
+            return;
         }
     }
 
-    if (argc == 4 && strcmp(argv[1], "port") == 0) {
-        
-        const char *destination = argv[2];
-        const int port  = atoi(argv[3]);
-
-        if(port <= 0) {
-            print_colored("NOPE. Thats an invalid port my friend! Port must be positive.", "\033[31m");
-            return;
-        }
-
-        int sockfd;
-        struct sockaddr_in addr;
-        socklen_t addr_len = sizeof(addr);
-
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-
-        if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
-            struct hostent *host = gethostbyname(destination);
-            if (host == NULL) {
-                herror("gethostbyname");
-                return;
-            }
-            addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
-        }
-        printf("Scanning port %d for destination %s...\n", port, destination);
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd < 0 ) {
-            perror("socket");
-            return;
-        }
-
-        addr.sin_port = htons(port);
-
-        struct timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 500000;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)); 
-
-        if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-            printf("Port %d is open!\n", port);
-        } else {
-            printf("Port %d is closed!\n", port);
-        }
-        close(sockfd);
-    }
-
-    if (argc == 5 && strcmp(argv[1], "port") == 0) {
-        
-        const char *destination = argv[2];
-        const int start_port  = atoi(argv[3]);
-        const int end_port  = atoi(argv[4]);
-
-        if(start_port <= 0 || end_port <= 0 || start_port > end_port) {
-            print_colored("NOPE. Thats an invalid port range my friend! Start port and end port must be positive "
-                        "and end port must be greater than or equal to start port.", "\033[31m");
-            return;
-        }
-
-        int sockfd;
-        struct sockaddr_in addr;
-        socklen_t addr_len = sizeof(addr);
-
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-
-        if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
-            struct hostent *host = gethostbyname(destination);
-            if (host == NULL) {
-                herror("gethostbyname");
-                return;
-            }
-            addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
-        }
-        printf("Scanning ports from range %d to %d for destination %s...\n", start_port, end_port, destination);
-        for (int port = start_port; port <= end_port; port++) {
-            sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            if (sockfd < 0 ) {
-                perror("socket");
-                continue;
-            }
-
-            addr.sin_port = htons(port);
-
-            struct timeval timeout;
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 500000;
-            setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-            setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)); 
-
-            if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-                printf("Port %d is open!\n", port);
-            } else {
-                continue;
-            }
-
-            close(sockfd);
-        }
-    }
+    print_colored("NOPE. I don't know that command my friend.\n", ERROR_COLOR);
+    print_scan_help();
     return;
 }
+
 
 void cmd_hello(int argc, char *argv[]) {
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
         printf("Usage: wiwa hello\nPrints a little welcome message.\n");
         return;
     }
-    printf("Hello and welcome to this little WireWatch network scanner my friend!\n\n");
+    print_colored("Hello and welcome to this little WireWatch network scanner my friend!\n\n", GREEN_COLOR);
 }
 
 Command commands[] = {
-    {"ip", cmd_ip, "Show local IP adresses and subnet masks."},
     {"hello", cmd_hello, "Prints a little welcome message."},
     {"mac", cmd_mac, "Displays MAC adresses for each interface."},
     {"gateway", cmd_gateway, "Displays the default gateway adress."},
     {"ping", cmd_ping, "Pings a destination adress and returns a summary."},
     {"scan", cmd_scan, "Used to scan some cool things, e.g. open ports for a destination adress."},
+};
+
+Command scan_commands[] = {
+    {"port", scan_port, "Scan open ports for a destination adress."},
+    {"ip", scan_ip, "Show local IP adresses and subnet masks."},
     {NULL, NULL, NULL}
 };
 
@@ -382,6 +323,13 @@ void print_help() {
     printf("Available commands:\n");
     for (int i = 0; commands[i].name != NULL; i++) {
         printf("  %s - %s\n", commands[i].name, commands[i].help);
+    }
+}
+
+void print_scan_help() {
+    printf("Available subcommands:\n");
+    for (int i = 0; scan_commands[i].name != NULL; i++) {
+        printf("  %s - %s\n", scan_commands[i].name, scan_commands[i].help);
     }
 }
 

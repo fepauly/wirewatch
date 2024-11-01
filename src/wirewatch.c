@@ -3,7 +3,7 @@
 
 int main (int argc, char *argv[]) {
     if (argc < 2) {
-        print_colored("WOW. You are missing some commands my friend. Try 'wiwa help' for some help!", "\033[31m");
+        print_colored("WOW. You are missing some commands my friend. Try 'wiwa help' for some help!", ERROR_COLOR);
         return 1;
     } 
 
@@ -19,8 +19,7 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    print_colored("NOPE. I don't know that command my friend.\n", "\033[31m");
+    print_colored("NOPE. I don't know that command my friend.\n", ERROR_COLOR);
     print_help();
     return 1;
-    
 }

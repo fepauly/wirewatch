@@ -29,8 +29,10 @@ typedef struct {
 } Port;
 
 extern Command commands[];
+extern Command scan_commands[];
 extern Port default_ports[];
 void print_help();
+void print_scan_help();
 int is_valid_ip(const char *ip);
 int checksum(void *b, int len);
 

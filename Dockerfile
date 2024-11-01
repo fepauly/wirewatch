@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     libpcap-dev \          
     curl \                 
     git \
-    cmake                   
+    cmake \
+    cppcheck                  
 
 
 WORKDIR /usr/src/app

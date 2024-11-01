@@ -1,6 +1,0 @@
-[1msrc/commands.c:215:13: [31mstyle:[39m The scope of the variable 'sockfd' can be reduced. [variableScope][0m
-        int sockfd;
-            ^
-[1msrc/commands.c:319:13: [31mstyle:[39m The scope of the variable 'sockfd' can be reduced. [variableScope][0m
-        int sockfd;
-            ^
