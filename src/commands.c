@@ -105,10 +105,9 @@ void scan_port(int argc, char *argv[]){
     }
 
     size_t range_count = (argc == 2) ? sizeof(default_ports) / sizeof(default_ports[0]) : (size_t)(end_port - start_port + 1);
-    int sockfd;
     for (size_t i = 0; i < range_count; i++) {
         int port = (argc == 2) ? default_ports[i].port : start_port + (int)i;
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd < 0) {
             perror("socket");
             continue;
