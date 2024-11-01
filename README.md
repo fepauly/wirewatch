@@ -10,7 +10,11 @@ This little piece of software is basically a very simple network scanner build i
 
 ## Installation
 
-You can install it from source via CMake using gcc compiler:
+You can download the `wirewatch-linux` executable from the release assets!
+> Note that you might need to execute following command on Linux `chmod +x wirewatch-linux` 😊
+
+
+Or you can install it from source via CMake using gcc compiler:
 
 ```
 git clone https://github.com/fepauly/wirewatch.git
