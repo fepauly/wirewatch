@@ -1,0 +1,41 @@
+name: Linux Dev Build
+
+on:
+  push:
+    branches:
+      - feature/**
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.30.x'
+      
+      - name: Install GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-11 g++-11 
+
+      - name: Install cppcheck
+        run: sudo apt-get install cppcheck
+
+      - name: Run CPPCheck
+        run: cppcheck --enable=all --suppress=missingIncludeSystem --inline-suppr --error-exitcode=1 -I include src
+
+      - name: Create buil dir
+        run: mkdir build
+      
+      - name: Build
+        run: |
+          export CC=gcc-11
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          cmake --build . 
