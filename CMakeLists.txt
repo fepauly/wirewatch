@@ -14,6 +14,7 @@ set(SOURCES
     src/traceroute.c
     src/wirewatch.c
     src/scan.c
+    src/getipv4.c
 )
 
 add_executable(wiwa ${SOURCES})

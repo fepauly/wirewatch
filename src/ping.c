@@ -6,7 +6,7 @@ int cmd_ping(int argc, char *argv[]) {
         return 0;
     }
     if (argc != 2) {
-        print_colored("NOPE. You need to add a destination adress my friend: wiwa ping <destination adress>!", ERROR_COLOR);
+        print_colored(ERROR_COLOR, "NOPE. You need to add a destination adress my friend: wiwa ping <destination adress>!");
         return 1;
     }
 
@@ -28,16 +28,7 @@ int cmd_ping(int argc, char *argv[]) {
 
     // Set destination adress
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-
-    if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
-        struct hostent *host = gethostbyname(destination);
-        if (host == NULL) {
-            perror("gethostbyname");
-            return 1;
-        }
-        addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
-    }
+    getipv4(destination, &addr);
 
     // Create ICMP packet
     memset(&packet, 0, sizeof(packet));
@@ -65,5 +56,5 @@ int cmd_ping(int argc, char *argv[]) {
         printf("Received from %s: seq=%d time=%.2f ms\n", inet_ntoa(addr.sin_addr), packet.un.echo.sequence, time_taken);
     }
     close(sockfd);
-    return 1;
+    return 0;
 }

@@ -29,3 +29,25 @@ int calc_checksum(void *b, int len) {
     result = ~sum;
     return result;
 }
+
+int getipv4(const char* destination, struct sockaddr_in *addr) {
+    addr->sin_family = AF_INET;
+    if(inet_pton(AF_INET, destination, &addr->sin_addr) == 1) {
+        return 0; // Successfull conversion of IP address
+    }
+
+    // conversion failed, try converting host name
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET; // only ipv4
+
+    int status = getaddrinfo(destination, NULL, &hints, &res);
+    if (status != 0 ) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+        return -1;
+    }
+
+    *addr = *(struct sockaddr_in *)res->ai_addr;
+    freeaddrinfo(res);
+    return 0;
+}

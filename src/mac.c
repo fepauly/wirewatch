@@ -21,9 +21,9 @@ int cmd_mac(int argc, char *argv[]) {
             sprintf(mac_str, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
             printf("  Interface: ");
-            print_colored(tmp->ifa_name, BLUE_COLOR);
+            print_colored(BLUE_COLOR, tmp->ifa_name);
             printf("    MAC Address: ");
-            print_colored(mac_str, GREEN_COLOR);
+            print_colored(GREEN_COLOR, mac_str);
         }
     }
     freeifaddrs(addrs); 

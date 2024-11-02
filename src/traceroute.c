@@ -7,7 +7,7 @@ int cmd_traceroute(int argc, char *argv[]) {
     }
 
     if (argc != 2) {
-        print_colored("NOPE. You need to add a destination adress my friend: wiwa traceroute <destination adress>!", ERROR_COLOR);
+        print_colored(ERROR_COLOR, "NOPE. You need to add a destination adress my friend: wiwa traceroute <destination adress>!");
         return 1;
     }
 
@@ -62,17 +62,15 @@ int cmd_traceroute(int argc, char *argv[]) {
         struct sockaddr_in reply_addr;
         socklen_t reply_len = sizeof(reply_addr);
         if (recvfrom(sockfd, &recv_buffer, sizeof(recv_buffer), 0, (struct sockaddr *)&reply_addr, &reply_len) < 0) {
-            char error_message[40];
-            sprintf(error_message, "Error at stop %d", ttl);
-            print_colored(error_message, ERROR_COLOR);
+            print_colored(ERROR_COLOR, "Error at stop %d", ttl);
         } else {
             char ip_str[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &reply_addr.sin_addr, ip_str, sizeof(ip_str));
             printf("Stop %d: ", ttl);
-            print_colored(ip_str, BLUE_COLOR);
+            print_colored(BLUE_COLOR, ip_str);
 
             if (strcmp(ip_str, destination_ip) == 0) {
-                print_colored("You reached the destination my friend.", GREEN_COLOR);
+                print_colored(GREEN_COLOR, "You reached the destination my friend.");
                 break;
             }
         }

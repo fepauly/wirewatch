@@ -29,17 +29,15 @@ int cmd_gateway(int argc, char *argv[]) {
             struct in_addr gw_addr;
             gw_addr.s_addr = gateway;
             
-            char gateway_str[INET_ADDRSTRLEN];
-            sprintf(gateway_str, "%s", inet_ntoa(gw_addr));
             printf("Default Gateway (via %s): ", iface);
-            print_colored(gateway_str, GREEN_COLOR);
+            print_colored(GREEN_COLOR, inet_ntoa(gw_addr));
             
             fclose(fp);
             return 0;
         }
     }
 
-    print_colored("No default gateway found.", ERROR_COLOR);
+    print_colored(ERROR_COLOR, "No default gateway found." );
     fclose(fp);
     return 0;
 }

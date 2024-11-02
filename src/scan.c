@@ -27,7 +27,7 @@ Port default_ports[] = {
 
 int cmd_scan(int argc, char *argv[]) {
     if (argc < 2) {
-        print_colored("NOPE. Usage: wiwa scan <subcommand>", ERROR_COLOR);
+        print_colored(ERROR_COLOR, "NOPE. Usage: wiwa scan <subcommand>");
         return 1;
     }
 
@@ -43,7 +43,7 @@ int cmd_scan(int argc, char *argv[]) {
         }
     }
 
-    print_colored("NOPE. I don't know that command my friend.\n", ERROR_COLOR);
+    print_colored(ERROR_COLOR, "NOPE. I don't know that command my friend.\n");
     print_scan_help();
     return 0;
 }
@@ -72,11 +72,11 @@ int scan_ip(int argc, char *argv[]) {
 
             // Print ip information
             printf("  Interface: ");
-            print_colored(tmp->ifa_name, BLUE_COLOR);
+            print_colored(BLUE_COLOR, tmp->ifa_name);
             printf("    IPv4 Adress: ");
-            print_colored(ip, GREEN_COLOR);
+            print_colored(GREEN_COLOR, ip);
             printf("    Subnet Mask: ");
-            print_colored(subnet, GREEN_COLOR);
+            print_colored(GREEN_COLOR, subnet);
         }
     }
     freeifaddrs(addrs);
@@ -90,7 +90,7 @@ int scan_port(int argc, char *argv[]) {
     }
 
     if (argc < 2) {
-        print_colored("NOPE. Usage: wiwa scan port <destination address> [start_port] [end_port]", ERROR_COLOR);
+        print_colored(ERROR_COLOR, "NOPE. Usage: wiwa scan port <destination address> [start_port] [end_port]");
         return 1;
     }
 
@@ -115,7 +115,7 @@ int scan_port(int argc, char *argv[]) {
     } else if (argc == 3) {  // Single port
         start_port = end_port = atoi(argv[2]);
         if (start_port <= 0) {
-            print_colored("Thats an invalid port my friend. Port must be positive.", ERROR_COLOR);
+            print_colored(ERROR_COLOR, "Thats an invalid port my friend. Port must be positive.");
             return 1;
         }
         printf("Scanning port %d for destination %s...\n", start_port, destination);
@@ -123,7 +123,7 @@ int scan_port(int argc, char *argv[]) {
         start_port = atoi(argv[2]);
         end_port = atoi(argv[3]);
         if (start_port <= 0 || end_port <= 0 || start_port > end_port) {
-            print_colored("Thats an invalid port range my friend. Ports must be positive and start port must be less than or equal to end port.", ERROR_COLOR);
+            print_colored(ERROR_COLOR, "Thats an invalid port range my friend. Ports must be positive and start port must be less than or equal to end port.");
             return 1;
         }
         printf("Scanning ports from %d to %d for destination %s...\n", start_port, end_port, destination);
