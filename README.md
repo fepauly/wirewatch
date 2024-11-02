@@ -6,7 +6,7 @@ This is a little project i started more or less spontaneously during a week with
 
 ## Introduction
 
-This little piece of software is basically a very simple network scanner build in C and only for Linux at the moment (until i find the time and energy to look into the Windows specific network APIs :smile:).
+This little piece of software is basically a very simple network scanner build in C and only for Linux and IPv4 at the moment (until i find the time and energy to look into the Windows specific network APIs :smile:).
 
 ## Installation
 
