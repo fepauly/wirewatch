@@ -77,7 +77,7 @@ void scan_port(int argc, char *argv[]){
     if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
         struct hostent *host = gethostbyname(destination);
         if (host == NULL) {
-            herror("gethostbyname");
+            perror("gethostbyname");
             return;
         }
         addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
@@ -237,7 +237,7 @@ void cmd_ping(int argc, char *argv[]) {
     if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
         struct hostent *host = gethostbyname(destination);
         if (host == NULL) {
-            herror("gethostbyname");
+            perror("gethostbyname");
             return;
         }
         addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
@@ -253,14 +253,14 @@ void cmd_ping(int argc, char *argv[]) {
     // Send the packet
     clock_gettime(CLOCK_MONOTONIC, &start); // Start time
     if (sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr *) &addr, addr_len) <= 0) {
-        herror("sendto");
+        perror("sendto");
         exit(EXIT_FAILURE);
     }
 
     // Wait for answer
     char buf[1024];
     if (recvfrom(sockfd, &buf, sizeof(buf), 0, (struct sockaddr *)&addr, &addr_len) <= 0) {
-        herror("revcfrom");
+        perror("revcfrom");
         exit(EXIT_FAILURE);
     } else {
         clock_gettime(CLOCK_MONOTONIC, &end); // Get end time
@@ -294,6 +294,85 @@ void cmd_scan(int argc, char *argv[]) {
     return;
 }
 
+void cmd_traceroute(int argc, char *argv[]) {
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        printf("Usage: wiwa traceroute <destination adress>\nTrace the path packets take to a destination with ICMP echo requests.\n");
+        return;
+    }
+    if (argc != 2) {
+        print_colored("NOPE. You need to add a destination adress my friend: wiwa ping <destination adress>!", ERROR_COLOR);
+        return;
+    }
+
+    const char *destination = argv[1];
+
+    int sockfd;
+    struct sockaddr_in addr; // destination adress
+    struct icmphdr packet;
+    socklen_t addr_len = sizeof(addr);
+    char recv_buffer[64];
+    struct timeval timeout = {1, 0};
+    int max_hops = 30;
+
+    // Create raw socket
+    sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd < 0 ) {
+        perror("socket");
+        return;
+    }
+
+    // Set destination adress
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+
+    if (inet_pton(AF_INET, destination, &addr.sin_addr) <= 0) {
+        struct hostent *host = gethostbyname(destination);
+        if (host == NULL) {
+            perror("gethostbyname");
+            return;
+        }
+        addr.sin_addr = *((struct in_addr *)host->h_addr_list[0]);
+    }
+
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    char destination_ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr.sin_addr, destination_ip, sizeof(destination_ip));
+
+    for (int ttl = 1; ttl <= max_hops; ttl++) {
+        setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+        // Create ICMP packet
+        memset(&packet, 0, sizeof(packet));
+        packet.type = ICMP_ECHO;
+        packet.un.echo.id = getpid();
+        packet.un.echo.sequence = ttl;
+        packet.checksum = checksum(&packet, sizeof(packet));
+
+        if (sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr *) &addr, addr_len) <= 0) {
+            perror("sendto");
+            exit(EXIT_FAILURE);
+        }
+
+        struct sockaddr_in reply_addr;
+        socklen_t reply_len = sizeof(reply_addr);
+        if (recvfrom(sockfd, &recv_buffer, sizeof(recv_buffer), 0, (struct sockaddr *)&reply_addr, &reply_len) < 0) {
+            char error_message[40];
+            sprintf(error_message, "Error at stop %d", ttl);
+            print_colored(error_message, ERROR_COLOR);
+        } else {
+            char ip_str[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &reply_addr.sin_addr, ip_str, sizeof(ip_str));
+            printf("Stop %d: ", ttl);
+            print_colored(ip_str, BLUE_COLOR);
+
+            if (strcmp(ip_str, destination_ip) == 0) {
+                print_colored("You reached the destination my friend.", GREEN_COLOR);
+                break;
+            }
+        }
+    }
+    close(sockfd);
+}
+
 
 void cmd_hello(int argc, char *argv[]) {
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
@@ -309,6 +388,8 @@ Command commands[] = {
     {"gateway", cmd_gateway, "Displays the default gateway adress."},
     {"ping", cmd_ping, "Pings a destination adress and returns a summary."},
     {"scan", cmd_scan, "Used to scan some cool things, e.g. open ports for a destination adress."},
+    {"traceroute", cmd_traceroute, "Trace the path packets take to a destination with ICMP echo requests."},
+    {NULL, NULL, NULL}
 };
 
 Command scan_commands[] = {
